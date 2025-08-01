@@ -1,0 +1,482 @@
+<!-- Save as: csv-to-sql-generator.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>CSV to SQL Generator (Module / Group / Field / Field Item)</title>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+ <style>
+    :root {
+      --primary: #4361ee;
+      --primary-hover: #3a56d4;
+      --secondary: #f8f9fa;
+      --border: #e0e0e0;
+      --text: #333;
+      --text-light: #666;
+      --shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      --radius: 8px;
+      --radius-sm: 4px;
+      --transition: all 0.2s ease;
+    }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f8fafc;
+      color: var(--text);
+      line-height: 1.6;
+      padding: 0;
+      margin: 0;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    
+    header {
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+    
+    h1 {
+      font-size: 2rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: var(--primary);
+    }
+    
+    .subtitle {
+      color: var(--text-light);
+      font-size: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .card {
+      background: white;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    
+    .tabs {
+      display: flex;
+      background: var(--secondary);
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .tab {
+      padding: 1rem 1.5rem;
+      cursor: pointer;
+      font-weight: 500;
+      color: var(--text-light);
+      transition: var(--transition);
+      position: relative;
+    }
+    
+    .tab:hover {
+      color: var(--primary);
+      background: rgba(67, 97, 238, 0.05);
+    }
+    
+    .tab.active {
+      color: var(--primary);
+      background: white;
+    }
+    
+    .tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--primary);
+    }
+    
+    .tab-content {
+      display: none;
+      padding: 2rem;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    .upload-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem;
+      border: 2px dashed var(--border);
+      border-radius: var(--radius-sm);
+      margin-bottom: 1.5rem;
+      transition: var(--transition);
+    }
+    
+    .upload-area:hover {
+      border-color: var(--primary);
+    }
+    
+    .upload-area i {
+      font-size: 2rem;
+      color: var(--primary);
+      margin-bottom: 1rem;
+    }
+    
+    .file-input {
+      display: none;
+    }
+    
+    .file-label {
+      background: var(--primary);
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: var(--transition);
+      font-weight: 500;
+      display: inline-block;
+      margin-bottom: 1rem;
+    }
+    
+    .file-label:hover {
+      background: var(--primary-hover);
+      transform: translateY(-1px);
+    }
+    
+    .file-name {
+      margin-top: 0.5rem;
+      font-size: 0.9rem;
+      color: var(--text-light);
+    }
+    
+    .btn {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-weight: 500;
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .btn:hover {
+      background: var(--primary-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .btn i {
+      font-size: 1rem;
+    }
+    
+    textarea {
+      width: 100%;
+      height: 300px;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.9rem;
+      padding: 1rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      resize: vertical;
+      background: #fcfcfc;
+      line-height: 1.5;
+    }
+    
+    textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.2);
+    }
+    
+    .output-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    
+    .copy-btn {
+      background: var(--secondary);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: var(--transition);
+    }
+    
+    .copy-btn:hover {
+      background: #e9ecef;
+    }
+    
+    .copy-btn.copied {
+      background: #e6f7e6;
+      color: #2e7d32;
+      border-color: #c8e6c9;
+    }
+    
+    @media (max-width: 768px) {
+      .container {
+        padding: 1rem;
+      }
+      
+      .tabs {
+        flex-wrap: wrap;
+      }
+      
+      .tab {
+        flex: 1;
+        text-align: center;
+        padding: 0.75rem;
+        font-size: 0.9rem;
+      }
+      
+      .tab-content {
+        padding: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>CSV to SQL Generator</h1>
+    <p class="subtitle">Convert CSV files to SQL insert statements for Modules, Groups, Fields, and Field Items</p>
+  </header>
+
+  <div class="card">
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('module')"><i class="fas fa-cube"></i> Module</div>
+      <div class="tab" onclick="switchTab('group')"><i class="fas fa-layer-group"></i> Group</div>
+      <div class="tab" onclick="switchTab('field')"><i class="fas fa-tag"></i> Field</div>
+      <div class="tab" onclick="switchTab('fieldItem')"><i class="fas fa-list"></i> Field Item</div>
+    </div>
+
+    <!-- Module -->
+    <div id="module" class="tab-content active">
+      <div class="upload-area">
+        <i class="fas fa-file-csv"></i>
+        <input type="file" id="moduleCSV" class="file-input" accept=".csv" onchange="updateFileName('moduleCSV', 'moduleFileName')">
+        <label for="moduleCSV" class="file-label">Choose CSV File</label>
+        <div id="moduleFileName" class="file-name">No file selected</div>
+      </div>
+      <button class="btn" onclick="generateModuleSQL()"><i class="fas fa-database"></i> Generate Module SQL</button>
+      <div class="output-header">
+        <h3>Generated SQL</h3>
+        <button class="copy-btn" onclick="copyToClipboard('moduleOutput')"><i class="far fa-copy"></i> Copy</button>
+      </div>
+      <textarea id="moduleOutput" readonly></textarea>
+    </div>
+
+    <!-- Group -->
+    <div id="group" class="tab-content">
+      <div class="upload-area">
+        <i class="fas fa-file-csv"></i>
+        <input type="file" id="groupCSV" class="file-input" accept=".csv" onchange="updateFileName('groupCSV', 'groupFileName')">
+        <label for="groupCSV" class="file-label">Choose CSV File</label>
+        <div id="groupFileName" class="file-name">No file selected</div>
+      </div>
+      <button class="btn" onclick="generateGroupSQL()"><i class="fas fa-database"></i> Generate Group SQL</button>
+      <div class="output-header">
+        <h3>Generated SQL</h3>
+        <button class="copy-btn" onclick="copyToClipboard('groupOutput')"><i class="far fa-copy"></i> Copy</button>
+      </div>
+      <textarea id="groupOutput" readonly></textarea>
+    </div>
+
+    <!-- Field -->
+    <div id="field" class="tab-content">
+      <div class="upload-area">
+        <i class="fas fa-file-csv"></i>
+        <input type="file" id="fieldCSV" class="file-input" accept=".csv" onchange="updateFileName('fieldCSV', 'fieldFileName')">
+        <label for="fieldCSV" class="file-label">Choose CSV File</label>
+        <div id="fieldFileName" class="file-name">No file selected</div>
+      </div>
+      <button class="btn" onclick="generateFieldSQL()"><i class="fas fa-database"></i> Generate Field SQL</button>
+      <div class="output-header">
+        <h3>Generated SQL</h3>
+        <button class="copy-btn" onclick="copyToClipboard('fieldOutput')"><i class="far fa-copy"></i> Copy</button>
+      </div>
+      <textarea id="fieldOutput" readonly></textarea>
+    </div>
+
+    <!-- Field Item -->
+    <div id="fieldItem" class="tab-content">
+      <div class="upload-area">
+        <i class="fas fa-file-csv"></i>
+        <input type="file" id="fieldItemCSV" class="file-input" accept=".csv" onchange="updateFileName('fieldItemCSV', 'fieldItemFileName')">
+        <label for="fieldItemCSV" class="file-label">Choose CSV File</label>
+        <div id="fieldItemFileName" class="file-name">No file selected</div>
+      </div>
+      <button class="btn" onclick="generateFieldItemSQL()"><i class="fas fa-database"></i> Generate Field Item SQL</button>
+      <div class="output-header">
+        <h3>Generated SQL</h3>
+        <button class="copy-btn" onclick="copyToClipboard('fieldItemOutput')"><i class="far fa-copy"></i> Copy</button>
+      </div>
+      <textarea id="fieldItemOutput" readonly></textarea>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const tabs = document.querySelectorAll('.tab');
+  const contents = document.querySelectorAll('.tab-content');
+
+  function switchTab(tabId) {
+    tabs.forEach(tab => tab.classList.remove('active'));
+    contents.forEach(content => content.classList.remove('active'));
+    document.querySelector(`.tab[onclick*="${tabId}"]`).classList.add('active');
+    document.getElementById(tabId).classList.add('active');
+  }
+
+  function updateFileName(inputId, fileNameId) {
+    const fileInput = document.getElementById(inputId);
+    const fileNameDisplay = document.getElementById(fileNameId);
+    fileNameDisplay.textContent = fileInput?.files[0]?.name || 'No file selected';
+  }
+
+  function copyToClipboard(textareaId) {
+    const textarea = document.getElementById(textareaId);
+    const copyBtn = document.querySelector(`button[onclick="copyToClipboard('${textareaId}')"]`);
+    if (textarea.value.trim() === '') return alert('No SQL to copy!');
+    textarea.select(); document.execCommand('copy');
+    copyBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+    copyBtn.classList.add('copied');
+    setTimeout(() => {
+      copyBtn.innerHTML = '<i class="far fa-copy"></i> Copy';
+      copyBtn.classList.remove('copied');
+    }, 2000);
+  }
+
+  const escapeText = val => (val || '').replace(/'/g, "''");
+  const nullOrQuoted = val => `'${escapeText(val ?? '')}'`;
+  const nullOrNumber = val => val?.trim() !== '' && !isNaN(val) ? Number(val) : "NULL";
+  const parseBoolean = val => (val || "").toLowerCase() === "true" ? "true" : "false";
+  const jsonOrNull = val => {
+    if (!val || val.trim() === '') return "NULL";
+    try { JSON.parse(val); return `'${escapeText(val)}'::jsonb`; }
+    catch { return "NULL"; }
+  };
+
+  function generateSQLFromCSV(inputId, mapFn, outputId) {
+    const file = document.getElementById(inputId).files[0];
+    if (!file) return alert("Please upload a CSV file.");
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: res => document.getElementById(outputId).value = res.data.map(mapFn).join("\n\n"),
+      error: err => alert("Error parsing CSV: " + err.message)
+    });
+  }
+
+  function generateModuleSQL() {
+    generateSQLFromCSV("moduleCSV", row => `
+SELECT public.insert_into_module(
+  ${parseBoolean(row.is_active)},
+  ${nullOrQuoted(row.module_code)},
+  ${nullOrQuoted(row.module_name)},
+  ${nullOrQuoted(row.table_name)},
+  ${nullOrQuoted(row.created_by)},
+  ${nullOrQuoted(row.created_ip)},
+  ${nullOrQuoted(row.layout_type)},
+  ${nullOrQuoted(row.module_display_name)}
+);`, "moduleOutput");
+  }
+
+  function generateGroupSQL() {
+    generateSQLFromCSV("groupCSV", row => `
+SELECT public.insert_into_group_by_module_name(
+  ${parseBoolean(row.is_active)},
+  ${nullOrQuoted(row.group_code)},
+  ${nullOrQuoted(row.title)},
+  ${parseBoolean(row.show_title)},
+  ${nullOrNumber(row.sequence)},
+  ${nullOrQuoted(row.module_name)},
+  ${parseBoolean(row.expand_by_default)},
+  ${nullOrNumber(row.grid_layout_group)},
+  ${parseBoolean(row.is_expandable)},
+  ${parseBoolean(row.both_eyes)},
+  ${jsonOrNull(row.custom_config)},
+  ${nullOrQuoted(row.toggle_group_by)},
+  ${nullOrQuoted(row.toggle_group_by_item)},
+  ${nullOrNumber(row.start_expand_group_sequence)},
+  ${nullOrNumber(row.end_expand_group_sequence)},
+  ${parseBoolean(row.is_sub_group)}
+);`, "groupOutput");
+  }
+
+  function generateFieldSQL() {
+    generateSQLFromCSV("fieldCSV", row => `
+SELECT public.insert_into_field_by_group_title(
+  ${parseBoolean(row.is_active)},
+  ${nullOrQuoted(row.field_code)},
+  ${nullOrQuoted(row.title)},
+  ${parseBoolean(row.show_title)},
+  ${nullOrQuoted(row.control_type)},
+  ${nullOrQuoted(row.data_type)},
+  ${nullOrNumber(row.sequence)},
+  ${parseBoolean(row.allow_multi_selection)},
+  ${parseBoolean(row.is_required)},
+  ${parseBoolean(row.is_read_only)},
+  ${nullOrQuoted(row.repeat_for)},
+  ${nullOrQuoted(row.show_field_code)},
+  ${nullOrQuoted(row.show_field_item_code)},
+  ${parseBoolean(row.show_field_toggle)},
+  ${nullOrQuoted(row.min)},
+  ${nullOrQuoted(row.max)},
+  ${nullOrQuoted(row.form_control)},
+  ${nullOrQuoted(row.group_name)},
+  ${nullOrQuoted(row.field_api)},
+  ${nullOrQuoted(row.field_layout)},
+  ${nullOrQuoted(row.field_position)},
+  ${nullOrQuoted(row.field_query)},
+  ${nullOrNumber(row.grid_layout_field)},
+  ${nullOrQuoted(row.placeholder)},
+  ${nullOrQuoted(row.show_field_group_code)},
+  ${nullOrQuoted(row.width)},
+  ${parseBoolean(row.is_intend)},
+  ${parseBoolean(row.is_hidden_for_summary)},
+  ${parseBoolean(row.is_intend_for_summary)},
+  ${nullOrQuoted(row.show_data_as)},
+  ${jsonOrNull(row.custom_config)}
+);`, "fieldOutput");
+  }
+
+  function generateFieldItemSQL() {
+    generateSQLFromCSV("fieldItemCSV", row => `
+SELECT public.insert_field_item(
+  ${parseBoolean(row.is_active)},
+  ${nullOrQuoted(row.field_item_code)},
+  ${nullOrQuoted(row.text)},
+  ${nullOrNumber(row.sequence)},
+  ${nullOrQuoted(row.field_name || row.field_code)},
+  ${nullOrQuoted(row.code)},
+  ${nullOrQuoted(row.dependent_field_code)},
+  ${nullOrQuoted(row.dependent_field_item_code)},
+  ${nullOrQuoted(row.group_for)},
+  ${nullOrQuoted(row.component_name)},
+  ${nullOrNumber(row.dependent_field_id)},
+  ${nullOrNumber(row.dependent_field_item_id)},
+  ${parseBoolean(row.is_hidden_with_field_code)},
+  ${parseBoolean(row.is_values_independent)},
+  ${nullOrQuoted(row.icon)},
+  ${parseBoolean(row.default_selected)},
+  ${parseBoolean(row.is_normal_value)},
+  ${jsonOrNull(row.custom_config)}
+);`, "fieldItemOutput");
+  }
+</script>
+</body>
+</html>
